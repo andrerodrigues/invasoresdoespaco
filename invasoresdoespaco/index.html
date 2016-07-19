@@ -4,14 +4,14 @@
 	<style>
 		#myCanvas{
 			position:fixed;
-			top:18%;
-			left:28%;
+			top:80px;
+			left:80px;
 		}
 		
 		#bgCanvas{
 			position:fixed;
-			top:18%;
-			left:28%;
+			top:80px;
+			left:80px;
 		}
 		
 		body{
@@ -159,13 +159,16 @@
 		var startTime = false;
 		var keyboard = {};
 		var titleBackground;
-		//var startGame = $(".startGame");
+		var imgCenario = new Image();
+		var imgTitle = new Image();
+		var imgPlayer = new Image();
+		var imgMeteoro = new Image();
+		var imgLaser = new Image();
+		
+		var imgAliens = [];
 		
 		$("#myCanvas").hide();
-		
-		
-		
-		
+	
 		var controlledObject = {
 			x: 100,
 			y: 100
@@ -269,26 +272,34 @@
 			background_sound = document.createElement("audio");
 			document.body.appendChild(background_sound);
 			background_sound.setAttribute("src","sounds/darkfactory.wav");
+			
+			imgCenario.src = "images/espaco.png";
+			imgTitle.src = "images/spaceTitulo.png";
+			imgPlayer.src = "images/nave.png";
+			imgMeteoro.src = "images/meteoro4.png";
+			imgLaser.src = "images/laser.png";
+			
+			for(var i = 0;i<nameEnemies.length;i++){
+				imgAliens[i] = new Image();
+				imgAliens[i].src = nameEnemies[i];
+			}
+			
 		}
 		
 		loadResources();
-		
-			
 		background_sound.play();
 			
 	
 	var Cenario = (function(){
-				var Cenario = function(x,y,width,height,name){
+				var Cenario = function(x,y,width,height){
 					this.x = x;
 					this.y = y;
 					this.width = width;
 					this.height = height;
 					this.vy = 0;
-					this.name = name;
 					this.attrItens = [];
 					this.attrInimigos = [];
 					this.attrMeteoros = [];
-					this.imgCenario = new Image();
 					this.init();
 				};
 				Cenario.prototype ={
@@ -300,9 +311,8 @@
 					 },	
 					 draw:function(){
 						var context = this.context;
-						this.imgCenario.src = this.name;
-						context.drawImage(this.imgCenario,this.x,this.vy,this.width,this.height);
-						context.drawImage(this.imgCenario,this.x,-360+Math.abs(this.vy),this.width,this.height);
+						context.drawImage(imgCenario,this.x,this.vy,this.width,this.height);
+						context.drawImage(imgCenario,this.x,-360+Math.abs(this.vy),this.width,this.height);
 						
 						if(Math.abs(this.vy)>this.height){
 							this.vy = 0;
@@ -311,20 +321,17 @@
 						
 					 }
 				}
-			   return function(x,y,width,height,name){
-				 return new Cenario(x,y,width,height,name);
+			   return function(x,y,width,height){
+				 return new Cenario(x,y,width,height);
 			    }
 			})();
 			
-			
 			var TitleBackground = (function(){
-				var TitleBackground = function(x,y,width,height,name){
+				var TitleBackground = function(x,y,width,height){
 					this.x = x;
 					this.y = y;
 					this.width = width;
 					this.height = height;
-					this.name = name;
-					this.imgTitle = new Image();
 					this.init();
 				};
 				TitleBackground.prototype ={
@@ -336,24 +343,23 @@
 					 },	
 					 draw:function(){
 						var context = this.context;
-						this.imgTitle.src = this.name;
-						context.drawImage(this.imgTitle,this.x,this.y,this.width,this.height);						
+						context.drawImage(imgTitle,this.x,this.y,this.width,this.height);						
 					 }
 				}
-			   return function(x,y,width,height,name){
-				 return new TitleBackground(x,y,width,height,name);
+			   return function(x,y,width,height){
+				 return new TitleBackground(x,y,width,height);
 			    }
 			})();
 
+
 			var Inimigo = (function(){
 				var Inimigo = function(name,x,y,width,height,baseParameters){
-					 this.name = name;
+					 this.imgInimigo = name
 					 this.x = x;
 					 this.y = y;
 					 this.time = 0;
 					 this.width = width;
 					 this.height = height;
-					 this.imgInimigo = new Image();
 					 this.projeteis = [];
 					 this.t = 0;
 					 this.vx = 0;
@@ -378,7 +384,6 @@
 					   },
 					  draw:function(){
 							var context = this.context;
-							this.imgInimigo.src = this.name;
 							context.drawImage(this.imgInimigo,this.x,this.y,this.width,this.height);
 						} 	
 					}
@@ -424,6 +429,41 @@
                }				
 			})();
 			*/
+			
+		var Laser = (function(){
+				var Laser = function(x,y,width,height){
+					 this.x = x;
+					 this.y = y;
+					 this.velocity = 0.25;
+					 this.aceleration = 1.1;					 
+					 this.width = width;
+					 this.height = height;
+					 this.init();
+				};  
+					Laser.prototype = {
+						init:function(){
+							if(typeof this.context === 'undefined'){
+								var c = document.getElementById("myCanvas");
+								Laser.prototype.context = c.getContext("2d");
+							}
+						},
+					   moveTop:function(){
+							this.velocity *= this.aceleration; 
+							this.y-=this.velocity;
+						
+					   },
+					   moveBottom:function(){
+							this.y+=50.95;
+					   },
+					  draw:function(){
+							var context = this.context;
+							context.drawImage(imgLaser,this.x,this.y,this.width,this.height);
+						} 	
+					}
+			   return function(x,y,width,height){
+					return new Laser(x,y,width,height);
+               }				
+			})();
 			
 		var Projetil = (function(){
 				var Projetil = function(name,x,y,width,height){
@@ -491,8 +531,7 @@
 			})();
 	
 		var Player = (function(){
-				var Player = function(name,x,y,width,height){
-					 this.name = name;
+				var Player = function(x,y,width,height){
 					 this.x = x;
 					 this.y = y;
 					 this.velocity = 8.25;
@@ -505,7 +544,6 @@
 					 this.width = width;
 					 this.height = height;
 					 this.projeteis = new Array([],[]);
-					 this.imgPlayer = new Image();
 					 this.init();
 				};  
 					Player.prototype = {
@@ -516,45 +554,38 @@
 							}
 						},
 					   moveUp:function(){
-							//this.y-=0.89;
 							this.acelerationY = -0.3;
 							this.friction = 1;
 					   },
 					   moveDown:function(){
-							//this.y+= 1.89;
 							this.acelerationY = 0.3;
 							this.friction = 1;							
 					   },
 					   moveRight:function(){
-							//this.x+=this.velocity;
 							this.acelerationX = 0.3;
 							this.friction = 1;	
 					   },
 					   moveLeft:function(){
-							//this.x-=this.velocity;
 							this.acelerationX = -0.3;
 							this.friction = 1;	
 					   },
 					  draw:function(){
 							var context = this.context;
-							this.imgPlayer.src = this.name;
-							context.drawImage(this.imgPlayer,this.x,this.y,this.width,this.height);
+							context.drawImage(imgPlayer,this.x,this.y,this.width,this.height);
 						} 	
 					}
-			   return function(name,x,y,width,height){
-					return new Player(name,x,y,width,height);
+			   return function(x,y,width,height){
+					return new Player(x,y,width,height);
                }				
 			})();
 			
-			var Meteoro = (function(){
-				var Meteoro = function(name,x,y,width,height){
-					 this.name = name;
+		var Meteoro = (function(){
+				var Meteoro = function(x,y,width,height){
 					 this.x = x;
 					 this.y = y;	
 					 this.width = width;
 					 this.height = height;
 					 this.angle = 0;
-					 this.imgMeteoro = new Image();
 					 this.init();
 				};  
 					Meteoro.prototype = {
@@ -572,17 +603,16 @@
 					   },
 					  draw:function(){
 							var context = this.context;
-							this.imgMeteoro.src = this.name;
 							context.save();
 							context.translate(this.x,this.y);
 							context.rotate(this.angle);
 							this.angle += 1 * Math.PI / 180;
-							context.drawImage(this.imgMeteoro,this.width/-2,this.width/-2,this.width,this.height);
+							context.drawImage(imgMeteoro,this.width/-2,this.width/-2,this.width,this.height);
 							context.restore();
 						} 	
 					}
-			   return function(name,x,y,width,height){
-					return new Meteoro(name,x,y,width,height);
+			   return function(x,y,width,height){
+					return new Meteoro(x,y,width,height);
                }				
 			})();
 	
@@ -662,7 +692,7 @@
 			var meteorosLength = scene.attrMeteoros.length;
 			if(meteorosLength == 0){
 				for(var i = 0;i< 5 * Math.random();i++){	
-					scene.attrMeteoros.push(new Meteoro("images/meteoro4.png",Math.random() * canvasWidth,-10,50,40));
+					scene.attrMeteoros.push(new Meteoro(Math.random() * canvasWidth,-10,50,40));
 				}
 			}
 			
@@ -684,7 +714,8 @@
 			var inimigosLength = scene.attrInimigos.length;
 			if(inimigosLength == 0){
 				for(var i = 0;i<4 * Math.random();i++){
-					scene.attrInimigos.push(new Inimigo(nameEnemies[count],140 + i * 70,0,55,32,enemiesBases[count]));
+					scene.attrInimigos.push(new Inimigo(imgAliens[count],140 + i * 70,0,55,32,enemiesBases[count]));
+					//scene.attrInimigos.push(new Inimigo(nameEnemies[count],140 + i * 70,0,55,32,enemiesBases[count]));
 					//scene.attrInimigos.push(new Inimigo("alien.png",140 + i * 70,0,55,32));
 				}
 				count++;
@@ -695,12 +726,11 @@
 				var alien = scene.attrInimigos[i];	
 				if(alien != undefined){
 						alien.draw();
-						//alien.moveBottom();
 						 alien.step(3);
 						 alien.time++;
 						if(alien.time == 70){
 							laser_sound.play();
-							alien.projeteis.push(new Projetil("images/laser.png",alien.x,alien.y,11,26));
+							alien.projeteis.push(new Laser(alien.x,alien.y,11,26));
 							alien.time = 0;
 						}
 											
@@ -1046,8 +1076,8 @@ function updateSpaceship(){
 	function restart(){
 		pause = true;
 	    time = 0;
-		player = new Player("images/nave.png",280,250,75,60);
-		scene = new Cenario(0,0,canvas.width,canvas.height,"images/espaco.png");
+		player = new Player(280,250,75,60);
+		scene = new Cenario(0,0,canvas.width,canvas.height);
 		score = new Score(50,60);
 		
 		loop();
@@ -1057,7 +1087,7 @@ function updateSpaceship(){
 	   var frameDelay = 1000.0/frameRate;
 	
 	function drawTitle(){
-		titleBackground = new TitleBackground(0,0,canvas.width,canvas.width,"images/spaceTitulo.png");
+		titleBackground = new TitleBackground(0,0,canvas.width,canvas.width);
 		if(titleBackground != undefined){
 			titleBackground.draw();
 		}
