@@ -60,7 +60,69 @@
 			margin:0 auto;
 			width:600px;
 		}
-			
+		
+		.dialog{
+			display: none; /* Hidden by default */
+			position: fixed; /* Stay in place */
+			z-index: 1; /* Sit on top */
+			padding-top: 100px; /* Location of the box */
+			left: 0;
+			top: 0;
+			width: 100%; /* Full width */
+			height: 100%; /* Full height */
+			overflow: auto; /* Enable scroll if needed */
+			background-color: rgb(0,0,0); /* Fallback color */
+			background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+		}
+		
+		.dialog-content
+		{
+			background-color: #FFFF66;
+			border-radius: 10px;
+			color: #000;
+			font-weight:bold;
+			height: 312px;
+			left: 232px;
+			padding: 20px;
+			position: absolute;
+			text-align: center;
+			top: 81px;
+			width: 236px;
+		}
+		
+		.dialog-content h2{
+			font-size:28px;
+			color:#990000;
+			margin: 20px 0 20px;
+		}
+		
+		.but_start_game{
+			background-color: #990000;
+			border: 2px solid #f66;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 24px;
+			font-weight: bold;
+			height: 48px;
+			left: 42px;
+			line-height: 6px;
+			position: absolute;
+			text-shadow: 0 1px #f99;
+			top: 260px;
+			width: 200px;
+			text-align: center;
+            outline: none;
+			padding: 15px 25px;
+			box-shadow: 0 9px #999;
+		}
+		
+		.button:hover {background-color: #3e8e41}
+		
+		.button:active {
+			background-color: #3e8e41;
+			box-shadow: 0 5px #666;
+			transform: translateY(4px);
+		}
 	</style>
 	
 		<script src="js/jquery-2.1.1.min.js"></script>
@@ -73,6 +135,20 @@
 	<div id = "container">
 		<canvas  id="myCanvas" width="600" height="360"></canvas>
 	</div>
+	<div class="dialog">
+		<div id="end_game" class="dialog-content">
+			<div id="end_game_message">
+				<h2>Game Over</h2>
+				<div id="final_score">
+					<span>Final Score:</span>
+					<span id="final_score_value"></span>
+				</div>
+				<span>New High Score:</span>
+				<span id="new_high_score"></span>
+			</div>
+			<button class="but_start_game button">Play Again</button>
+		</div>
+	<div>
 	
 	<script>
 	  window.fbAsyncInit = function() {
@@ -119,10 +195,8 @@
 
 	<script type="text/javascript">
 		var canvas = document.getElementById("myCanvas");
-		//var canvas = initFullScreenCanvas("myCanvas");
 		var context = canvas.getContext("2d");
 		var bgCanvas = document.getElementById("bgCanvas");
-		//var bgCanvas = initFullScreenCanvas("bgCanvas");
 		var bgContext = bgCanvas.getContext("2d");
 
 		var canvasWidth = canvas.width;
@@ -164,11 +238,14 @@
 		var imgPlayer = new Image();
 		var imgMeteoro = new Image();
 		var imgLaser = new Image();
-		
+		var imgRocket = new Image();
 		var imgAliens = [];
-		
+		var dialog = $(".dialog");
+		var startGame = $(".but_start_game");
+
 		$("#myCanvas").hide();
-	
+		dialog.hide();
+		
 		var controlledObject = {
 			x: 100,
 			y: 100
@@ -278,12 +355,12 @@
 			imgPlayer.src = "images/nave.png";
 			imgMeteoro.src = "images/meteoro4.png";
 			imgLaser.src = "images/laser.png";
+			imgRocket.src = "images/foguete1.png";
 			
 			for(var i = 0;i<nameEnemies.length;i++){
 				imgAliens[i] = new Image();
 				imgAliens[i].src = nameEnemies[i];
 			}
-			
 		}
 		
 		loadResources();
@@ -465,23 +542,21 @@
                }				
 			})();
 			
-		var Projetil = (function(){
-				var Projetil = function(name,x,y,width,height){
-					 this.name = name;
+		var Rocket = (function(){
+				var Rocket = function(x,y,width,height){
 					 this.x = x;
 					 this.y = y;
 					 this.velocity = 0.25;
 					 this.aceleration = 1.1;					 
 					 this.width = width;
 					 this.height = height;
-					 this.imgProjetil = new Image();
 					 this.init();
 				};  
-					Projetil.prototype = {
+					Rocket.prototype = {
 						init:function(){
 							if(typeof this.context === 'undefined'){
 								var c = document.getElementById("myCanvas");
-								Projetil.prototype.context = c.getContext("2d");
+								Rocket.prototype.context = c.getContext("2d");
 							}
 						},
 					   moveTop:function(){
@@ -494,12 +569,11 @@
 					   },
 					  draw:function(){
 							var context = this.context;
-							this.imgProjetil.src = this.name;
-							context.drawImage(this.imgProjetil,this.x,this.y,this.width,this.height);
+							context.drawImage(imgRocket,this.x,this.y,this.width,this.height);
 						} 	
 					}
-			   return function(name,x,y,width,height){
-					return new Projetil(name,x,y,width,height);
+			   return function(x,y,width,height){
+					return new Rocket(x,y,width,height);
                }				
 			})();
 				
@@ -509,6 +583,7 @@
 					 this.y = y;	
 					 this.titulo = "Score: "
 					 this.pontos = 0;
+					 this.highScore = localStorage.getItem("highScore") == undefined ? 0 : localStorage.getItem("highScore");
 					 this.init();
 				};  
 					Score.prototype = {
@@ -523,13 +598,49 @@
 							context.fillStyle = "white";
 							context.font = "Bold 20pt Arial";
 							context.fillText(this.titulo +this.pontos ,this.x,this.y);
-						} 	
+						},
+					  save:function(){
+						if(this.pontos > this.highScore){
+							localStorage.setItem("highScore",this.pontos);
+						}
+					  }		
 					}
 			   return function(x,y){
 					return new Score(x,y);
                }				
 			})();
-	
+		
+		var Life = (function(){
+				var Life = function(x,y){
+					 this.lifes = 3;
+					 this.x = x;
+				     this.y = y;
+				     this.width = 50;
+				     this.height = 30;
+					 this.init();
+				};  
+					Life.prototype = {
+						init:function(){
+							if(typeof this.context === 'undefined'){
+								var c = document.getElementById("myCanvas");
+								Life.prototype.context = c.getContext("2d");
+							}
+						},			   
+					  draw:function(){
+							var context = this.context;
+							context.fillStyle = "white";
+							context.font = "Bold 20pt Arial";
+							context.fillText(this.lifes + " X" ,this.x,this.y);
+							context.drawImage(imgPlayer,this.x + this.width,this.y - this.height,this.width,this.height);
+						}	
+					}
+			   return function(x,y){
+					return new Life(x,y);
+               }				
+			})();
+		
+		life = new Life(420,60);
+		
 		var Player = (function(){
 				var Player = function(x,y,width,height){
 					 this.x = x;
@@ -826,6 +937,7 @@
 						}
 					}
 				}
+				score.save();
 			}
 			
 			for(var j = 0;j<scene.attrInimigos.length;j++){
@@ -897,23 +1009,37 @@
 			}	
 				if(startTime){
 					time+=1;
-					textOverlay.subTitle = "You Lost!"; 
+					/*textOverlay.subTitle = "You Lost!"; 
 					context.fillStyle = "white";
 					context.font = "Bold 20pt Arial";
-					context.fillText(textOverlay.subTitle,canvasWidth/3,canvasHeight/2);
+					context.fillText(textOverlay.subTitle,canvasWidth/3,canvasHeight/2);*/
 				}
 				
 				if(time == 80){	
-					textOverlay.subTitle = "";
 					pause = false;
 					startTime = false;
 					particles = [];
-					drawTitle();
-					$("#myCanvas").hide();
-					$("#bgCanvas").show();
+					$("#final_score_value").text(score.pontos);
+					$("#new_high_score").text(score.highScore);
+					
+					if(life.lifes > 1){
+						dialog.slideDown(1000).show();
+					}else{
+						life = new Life(420,60);
+						drawTitle();
+					    $("#myCanvas").hide();
+					    $("#bgCanvas").show();
+					}
 				}				
-		}	
-	
+		   }	
+		
+		startGame.click(function(){
+			$("#myCanvas").show();
+			dialog.hide();
+			 restart();
+			 life.lifes--;
+		});
+		
 	function InimigoAtira(){
 		scene.attrInimigos.length;
 		for(var j = 0;j<scene.attrInimigos.length;j++){
@@ -993,8 +1119,8 @@ function updateSpaceship(){
 			BOTTOM = false;
 		}else if(ATIRAR){
 			missle_sound.play();
-			player.projeteis[0].push(new Projetil("images/foguete1.png",player.x,player.y,20,44));
-			player.projeteis[1].push(new Projetil("images/foguete1.png",player.x+player.width-20,player.y,20,44));
+			player.projeteis[0].push(new Rocket(player.x,player.y,20,44));
+			player.projeteis[1].push(new Rocket(player.x+player.width-20,player.y,20,44));
 			ATIRAR = false;
 		}else{
 			player.acelerationY = 0;
@@ -1116,6 +1242,7 @@ function updateSpaceship(){
 				scene.draw();
 				drawPlayer();
 				updateSpaceship();
+				life.draw();
 				score.draw();		
 				atirar();
 				InimigoAtira();
